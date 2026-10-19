@@ -37,3 +37,10 @@ La primera implementación se centrará en el intercambio autenticado entre dos 
 **Estado:** aceptada.
 
 Claves privadas, tokens, contraseñas y credenciales no deben incluirse en archivos versionados. La configuración de ejemplo usará valores ficticios y documentará cómo aportar secretos localmente.
+
+
+## D-007 — Firmas Ed25519 para autenticación entre nodos
+
+**Estado:** aceptada para el prototipo.
+
+Cada solicitud de mensaje se autentica con una firma Ed25519 sobre método, ruta, identificador del emisor, marca de tiempo, nonce y huella SHA-256 del cuerpo. El receptor confía únicamente en claves públicas configuradas localmente. La autenticación no implica autorización para ejecutar tareas. La protección anti-repetición actual es temporal y en memoria; no se considera todavía una solución estable para múltiples instancias.
