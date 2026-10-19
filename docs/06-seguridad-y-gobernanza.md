@@ -8,7 +8,7 @@ No se asume que un nodo sea confiable únicamente porque participa en la red.
 
 ## 2. Identidad y autenticación
 
-Cada nodo utilizará una identidad criptográfica. Los mensajes autenticados deben vincularse al emisor y al contenido exacto firmado. La gestión, rotación y revocación de claves se especificará antes de una versión estable.
+El prototipo verifica firmas Ed25519 en `POST /mensajes`. La lista `AGENTMESH_NODOS_CONFIABLES` asocia identificadores autorizados con claves públicas PEM. La firma vincula método, ruta, emisor, marca de tiempo, nonce y huella SHA-256 del cuerpo exacto. El `sender_id` del mensaje debe coincidir con el emisor autenticado. La rotación y revocación operativa de claves aún debe formalizarse.
 
 Las claves privadas deben permanecer bajo control del operador y nunca incluirse en el repositorio.
 
@@ -20,7 +20,7 @@ Se aplica el principio de mínimo privilegio. No se permiten permisos globales i
 
 ## 4. Protección de mensajes
 
-Las futuras especificaciones deberán definir versión y tipo, identificador único, emisor y destinatario o ámbito, límites de tamaño, protección frente a repetición, autenticación e integridad, y comportamiento ante campos desconocidos o versiones incompatibles.
+El prototipo limita el cuerpo a 64 KiB, exige JSON, verifica Ed25519, acepta marcas de tiempo con una tolerancia de cinco minutos y rechaza nonces repetidos en la memoria del proceso. El cliente exige HTTPS para destinos remotos. La caché anti-repetición no sobrevive reinicios ni se comparte entre instancias; todavía no existe autorización de tareas ni persistencia distribuida.
 
 ## 5. Aislamiento de agentes
 
