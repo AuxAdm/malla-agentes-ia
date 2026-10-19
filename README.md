@@ -25,7 +25,7 @@ AgentMesh busca reducir la dependencia de un único proveedor, servidor, modelo 
 
 ## Estado del proyecto
 
-**Etapa inicial: prototipo de comunicación autenticada.** Ya existe una base TypeScript con validación de mensajes y verificación de firmas Ed25519 para `POST /mensajes`. Aún no ejecuta tareas remotas ni implementa memoria distribuida.
+**Prototipo en evolución:** `POST /mensajes` valida firmas Ed25519 y ahora puede registrar tareas `task.submit` y consultar `task.status`. Las tareas se guardan en disco y no se ejecutan automáticamente.
 
 ## Primeros objetivos
 
@@ -74,7 +74,9 @@ npm run dev
 El servidor escucha por defecto en `http://127.0.0.1:8787`, accesible solo desde el propio equipo.
 
 - `GET /salud`: muestra el estado del prototipo.
-- `POST /mensajes`: exige cabeceras firmadas Ed25519, verifica identidad, vigencia y repetición, valida el mensaje y no ejecuta la tarea solicitada.
+- `POST /mensajes`: exige cabeceras firmadas Ed25519, verifica identidad, vigencia y repetición, y valida el mensaje.
+- `task.submit`: dentro de `POST /mensajes`, guarda una tarea persistente con `payload.task_id` y `payload.task`.
+- `task.status`: dentro de `POST /mensajes`, consulta el estado usando `payload.task_id`; solo responde al nodo propietario.
 
 Para compilar y ejecutar la versión compilada:
 
@@ -107,7 +109,27 @@ npm run send:example
 
 En el receptor, define `AGENTMESH_NODOS_CONFIABLES` como JSON: cada clave es un identificador autorizado y cada valor es su clave pública PEM. Los saltos de línea pueden representarse como `\\n`. No incluyas la clave privada en esa lista ni en GitHub.
 
-La autenticación identifica al nodo, pero no autoriza por sí sola la ejecución de una tarea. El receptor todavía no ejecuta tareas remotas. El ejemplo requiere HTTPS para destinos remotos y solo permite HTTP para loopback local.
+La autenticación identifica al nodo, pero no autoriza por sí sola la ejecución de una tarea. `task.submit` guarda una tarea con estado inicial `accepted`; `task.status` permite consultar su estado únicamente al nodo propietario. Los datos se guardan por defecto en `./data/agentmesh-tasks.json`, configurable con `AGENTMESH_TASKS_FILE`. La escritura se serializa dentro del proceso y usa reemplazo atómico de archivo; todavía no es un almacén multiinstancia y no debe compartirse entre varios procesos concurrentes. Las tareas siguen sin ejecutarse automáticamente. El ejemplo requiere HTTPS para destinos remotos y solo permite HTTP para loopback local.
+
+### Ejemplo de envío de tarea
+
+Usa un mensaje firmado cuyo tipo sea `task.submit` y cuyo `payload` contenga un identificador y un objeto de tarea:
+
+```json
+{
+  "version": 1,
+  "message_id": "mensaje-tarea-001",
+  "type": "task.submit",
+  "sender_id": "nodo-a",
+  "created_at": "2026-10-19T12:00:00Z",
+  "payload": {
+    "task_id": "tarea-001",
+    "task": { "tipo": "ejemplo", "entrada": "datos" }
+  }
+}
+```
+
+La respuesta indica `state: accepted`. Reenviar el mismo `task_id` desde el mismo nodo con el mismo contenido devuelve la tarea existente; reutilizarlo con otro contenido produce `409 Conflict`. El estado se conserva en el archivo configurado, pero no hay trabajador ejecutor todavía.
 
 ### Ejemplo de mensaje
 
