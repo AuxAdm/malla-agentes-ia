@@ -1,6 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { randomUUID } from "node:crypto";
 import { validarMensaje } from "./protocolo/mensaje.js";
+import { verificarAutenticacionNodo } from "./seguridad/autenticacion-nodo.js";
 
 const HOST = process.env.AGENTMESH_HOST ?? "127.0.0.1";
 const PUERTO = Number.parseInt(process.env.AGENTMESH_PORT ?? "8787", 10);
@@ -15,7 +16,7 @@ function responder(respuesta: ServerResponse, estado: number, cuerpo: unknown): 
   respuesta.end(JSON.stringify(cuerpo));
 }
 
-async function leerJson(solicitud: IncomingMessage): Promise<unknown> {
+async function leerJson(solicitud: IncomingMessage): Promise<{ cuerpo: Buffer; valor: unknown }> {
   const partes: Buffer[] = [];
   let total = 0;
 
@@ -31,7 +32,8 @@ async function leerJson(solicitud: IncomingMessage): Promise<unknown> {
   }
 
   try {
-    return JSON.parse(Buffer.concat(partes).toString("utf8")) as unknown;
+    const cuerpo = Buffer.concat(partes);
+    return { cuerpo, valor: JSON.parse(cuerpo.toString("utf8")) as unknown };
   } catch {
     throw new Error("JSON_INVALIDO");
   }
@@ -57,8 +59,43 @@ const servidor = createServer(async (solicitud, respuesta) => {
     }
 
     try {
-      const entrada = await leerJson(solicitud);
+      const { cuerpo, valor: entrada } = await leerJson(solicitud);
+      const emisor = solicitud.headers["x-agentmesh-node"];
+      const marcaTiempo = solicitud.headers["x-agentmesh-timestamp"];
+      const nonce = solicitud.headers["x-agentmesh-nonce"];
+      const firma = solicitud.headers["x-agentmesh-signature"];
+
+      if (
+        typeof emisor !== "string" ||
+        typeof marcaTiempo !== "string" ||
+        typeof nonce !== "string" ||
+        typeof firma !== "string"
+      ) {
+        responder(respuesta, 401, { error: "Faltan las cabeceras de autenticación AgentMesh." });
+        return;
+      }
+
+      const autenticacion = verificarAutenticacionNodo({
+        metodo: solicitud.method ?? "POST",
+        ruta: ruta.pathname,
+        emisor,
+        marcaTiempo,
+        nonce,
+        firma,
+        cuerpo
+      });
+
+      if (!autenticacion.autenticado) {
+        responder(respuesta, autenticacion.estado, { error: autenticacion.error });
+        return;
+      }
+
       const resultado = validarMensaje(entrada);
+
+      if (resultado.valido && resultado.mensaje.sender_id !== emisor) {
+        responder(respuesta, 401, { error: "sender_id no coincide con la identidad autenticada." });
+        return;
+      }
 
       if (!resultado.valido) {
         responder(respuesta, 400, { error: resultado.error });
