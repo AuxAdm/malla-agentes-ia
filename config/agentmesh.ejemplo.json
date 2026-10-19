@@ -1,0 +1,15 @@
+{
+  "nombre_nodo": "nodo-local-ejemplo",
+  "identificador_nodo": "cambiar-por-un-identificador-unico",
+  "host": "127.0.0.1",
+  "puerto": 8787,
+  "limites": {
+    "tamano_mensaje_bytes": 65536,
+    "tareas_concurrentes": 2
+  },
+  "politica": {
+    "aceptar_tareas_remotas": false,
+    "replicar_memoria": false,
+    "ejecutar_comandos_sistema": false
+  }
+}
