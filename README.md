@@ -25,7 +25,7 @@ AgentMesh busca reducir la dependencia de un único proveedor, servidor, modelo 
 
 ## Estado del proyecto
 
-**Etapa inicial: especificación y diseño.** Los documentos describen la arquitectura propuesta; no deben interpretarse como funciones ya implementadas. La implementación se incorporará gradualmente y se identificará de forma explícita.
+**Etapa inicial: prototipo de comunicación autenticada.** Ya existe una base TypeScript con validación de mensajes y verificación de firmas Ed25519 para `POST /mensajes`. Aún no ejecuta tareas remotas ni implementa memoria distribuida.
 
 ## Primeros objetivos
 
@@ -57,7 +57,7 @@ La licencia se decidirá antes de publicar una implementación reutilizable. Has
 
 ## Prototipo ejecutable inicial
 
-El repositorio incluye una primera base en TypeScript. En esta etapa ofrece un servidor local con un endpoint de salud y otro para validar la estructura de mensajes. **Todavía no implementa autenticación criptográfica entre nodos, ejecución de tareas ni memoria distribuida.**
+El repositorio incluye un servidor TypeScript, validación de mensajes AgentMesh v1 y autenticación Ed25519 para solicitudes entre nodos de confianza. **Todavía no ejecuta tareas remotas ni implementa memoria distribuida.**
 
 ### Requisitos
 
@@ -74,7 +74,7 @@ npm run dev
 El servidor escucha por defecto en `http://127.0.0.1:8787`, accesible solo desde el propio equipo.
 
 - `GET /salud`: muestra el estado del prototipo.
-- `POST /mensajes`: recibe y valida un mensaje JSON de AgentMesh v1; no ejecuta la tarea solicitada.
+- `POST /mensajes`: exige cabeceras firmadas Ed25519, verifica identidad, vigencia y repetición, valida el mensaje y no ejecuta la tarea solicitada.
 
 Para compilar y ejecutar la versión compilada:
 
@@ -83,7 +83,20 @@ npm run build
 npm start
 ```
 
-Se puede cambiar el host y el puerto mediante las variables de entorno `AGENTMESH_HOST` y `AGENTMESH_PORT`. No expongas el servidor a una red pública: este prototipo todavía no autentica criptográficamente a los emisores.
+Se puede cambiar el host y el puerto mediante `AGENTMESH_HOST` y `AGENTMESH_PORT`. Para aceptar mensajes, configura `AGENTMESH_NODOS_CONFIABLES` como un objeto JSON que asocie cada identificador de nodo con su clave pública Ed25519 en formato PEM. Si no hay una lista válida, `POST /mensajes` responde `503`. Para conexiones remotas, usa HTTPS (por ejemplo, mediante un proxy TLS); el cliente solo permite HTTP en loopback para pruebas locales. La ventana de firma es de cinco minutos y el registro anti-repetición está en memoria, por lo que aún no persiste entre reinicios.
+
+### Preparar claves para dos nodos
+
+Genera un par independiente en cada equipo; no compartas ni subas la clave privada:
+
+```bash
+openssl genpkey -algorithm ED25519 -out nodo-a-privada.pem
+openssl pkey -in nodo-a-privada.pem -pubout -out nodo-a-publica.pem
+```
+
+En el nodo receptor, configura `AGENTMESH_NODOS_CONFIABLES` con los identificadores y las claves públicas autorizadas. En el emisor, carga la clave privada desde un gestor de secretos o una variable local y usa `enviarMensajeAutenticado` de `src/protocolo/cliente-nodo.ts`. La firma cubre método, ruta, identificador del emisor, marca de tiempo, nonce y huella SHA-256 del cuerpo.
+
+La autenticación identifica al nodo, pero no autoriza por sí sola la ejecución de una tarea. El receptor todavía no ejecuta tareas remotas.
 
 ### Ejemplo de mensaje
 
