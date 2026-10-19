@@ -2,6 +2,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { randomUUID } from "node:crypto";
 import { validarMensaje } from "./protocolo/mensaje.js";
 import { verificarAutenticacionNodo } from "./seguridad/autenticacion-nodo.js";
+import { almacenTareas } from "./tareas/almacen-tareas.js";
 
 const HOST = process.env.AGENTMESH_HOST ?? "127.0.0.1";
 const PUERTO = Number.parseInt(process.env.AGENTMESH_PORT ?? "8787", 10);
@@ -102,12 +103,64 @@ const servidor = createServer(async (solicitud, respuesta) => {
         return;
       }
 
+      const mensaje = resultado.mensaje;
+
+      if (mensaje.type === "task.submit") {
+        const taskId = mensaje.payload.task_id;
+        const contenidoTarea = mensaje.payload.task;
+        if (typeof taskId !== "string" || taskId.length < 1 || taskId.length > 128 ||
+            typeof contenidoTarea !== "object" || contenidoTarea === null || Array.isArray(contenidoTarea)) {
+          responder(respuesta, 400, {
+            error: "task.submit requiere payload.task_id (texto de 1 a 128 caracteres) y payload.task (objeto JSON)."
+          });
+          return;
+        }
+
+        const alta = await almacenTareas.registrar(taskId, emisor, contenidoTarea as Record<string, unknown>, mensaje.created_at);
+        if (!alta.creada) {
+          responder(respuesta, 409, { error: alta.error, task_id: taskId });
+          return;
+        }
+
+        responder(respuesta, alta.repetida ? 200 : 202, {
+          recibido: true,
+          task_id: alta.tarea.task_id,
+          state: alta.tarea.state,
+          repetida: alta.repetida,
+          created_at: alta.tarea.created_at,
+          nota: "Tarea guardada de forma persistente; aún no se ejecuta automáticamente."
+        });
+        return;
+      }
+
+      if (mensaje.type === "task.status") {
+        const taskId = mensaje.payload.task_id;
+        if (typeof taskId !== "string" || taskId.length < 1 || taskId.length > 128) {
+          responder(respuesta, 400, { error: "task.status requiere payload.task_id válido." });
+          return;
+        }
+        const tarea = await almacenTareas.consultar(taskId, emisor);
+        if (!tarea) {
+          responder(respuesta, 404, { error: "No existe una tarea con ese identificador para este nodo." });
+          return;
+        }
+        responder(respuesta, 200, {
+          task_id: tarea.task_id,
+          state: tarea.state,
+          created_at: tarea.created_at,
+          updated_at: tarea.updated_at,
+          result: tarea.result,
+          error: tarea.error
+        });
+        return;
+      }
+
       responder(respuesta, 202, {
         recibido: true,
-        message_id: resultado.mensaje.message_id,
-        tipo: resultado.mensaje.type,
+        message_id: mensaje.message_id,
+        tipo: mensaje.type,
         nodo: "agentmesh-local",
-        nota: "Mensaje validado; todavía no se ejecutan tareas remotas."
+        nota: "Mensaje autenticado y validado; este tipo aún no dispara una acción remota."
       });
     } catch (error) {
       const mensaje = error instanceof Error ? error.message : "ERROR_DESCONOCIDO";
