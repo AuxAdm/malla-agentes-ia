@@ -28,7 +28,7 @@ function clavesConfiables(): Record<string, string> | null {
     if (typeof valor !== "object" || valor === null || Array.isArray(valor)) return null;
     const resultado: Record<string, string> = {};
     for (const [id, clave] of Object.entries(valor)) {
-      if (typeof clave === "string" && clave.includes("BEGIN PUBLIC KEY")) resultado[id] = clave;
+      if (typeof clave === "string" && clave.includes("BEGIN PUBLIC KEY")) resultado[id] = clave.replace(/\\n/g, "\n");
     }
     return resultado;
   } catch {
