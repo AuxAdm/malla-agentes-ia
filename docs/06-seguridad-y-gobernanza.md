@@ -20,7 +20,7 @@ Se aplica el principio de mínimo privilegio. No se permiten permisos globales i
 
 ## 4. Protección de mensajes
 
-El prototipo limita el cuerpo a 64 KiB, exige JSON, verifica Ed25519, acepta marcas de tiempo con una tolerancia de cinco minutos y rechaza nonces repetidos en la memoria del proceso. El cliente exige HTTPS para destinos remotos. La caché anti-repetición no sobrevive reinicios ni se comparte entre instancias; todavía no existe autorización de tareas ni persistencia distribuida.
+El prototipo limita el cuerpo a 64 KiB, exige JSON, verifica Ed25519, acepta marcas de tiempo con una tolerancia de cinco minutos y rechaza nonces repetidos en la memoria del proceso. El cliente exige HTTPS para destinos remotos. La caché anti-repetición no sobrevive reinicios ni se comparte entre instancias. El almacén de tareas escribe un archivo JSON local con reemplazo atómico y serializa las operaciones dentro del proceso, pero no coordina varios procesos; no debe compartirse concurrentemente entre instancias. Todavía no existe autorización ni ejecución de tareas ni persistencia distribuida.
 
 ## 5. Aislamiento de agentes
 
