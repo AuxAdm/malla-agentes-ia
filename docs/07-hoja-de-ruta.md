@@ -9,16 +9,18 @@ La hoja de ruta prioriza avances pequeños que puedan ejecutarse y entenderse. C
 - [x] Definir responsabilidades de nodos y agentes.
 - [x] Definir principios de memoria, recuperación y seguridad.
 - [ ] Fijar el formato versionado del primer mensaje.
-- [ ] Documentar configuración local de ejemplo.
+- [x] Documentar configuración local de claves y confianza.
 
 ## Etapa 2 — Primer prototipo
 
-- Crear una implementación pequeña de nodo.
-- Generar o cargar una identidad local.
-- Permitir que dos nodos intercambien un mensaje.
-- Validar esquema, versión e identidad.
-- Rechazar mensajes inválidos o no autorizados.
-- Registrar resultados sin exponer secretos.
+- [x] Crear una implementación pequeña de nodo.
+- [x] Verificar identidades Ed25519 cargadas mediante configuración local.
+- [x] Añadir cliente de envío firmado y endpoint receptor autenticado.
+- [x] Validar esquema, versión e identidad del emisor.
+- [x] Rechazar firmas inválidas, nodos desconocidos, marcas de tiempo vencidas y nonces repetidos.
+- [x] Responder con estado de recepción sin devolver claves ni credenciales.
+
+**Pendiente para cerrar la etapa 2:** ejecutar compilación y prueba real entre dos procesos independientes; persistir la protección anti-repetición y definir rotación/revocación de claves.
 
 ## Etapa 3 — Tareas recuperables
 
