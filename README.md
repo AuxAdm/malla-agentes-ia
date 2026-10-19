@@ -96,7 +96,18 @@ openssl pkey -in nodo-a-privada.pem -pubout -out nodo-a-publica.pem
 
 En el nodo receptor, configura `AGENTMESH_NODOS_CONFIABLES` con los identificadores y las claves públicas autorizadas. En el emisor, carga la clave privada desde un gestor de secretos o una variable local y usa `enviarMensajeAutenticado` de `src/protocolo/cliente-nodo.ts`. La firma cubre método, ruta, identificador del emisor, marca de tiempo, nonce y huella SHA-256 del cuerpo.
 
-La autenticación identifica al nodo, pero no autoriza por sí sola la ejecución de una tarea. El receptor todavía no ejecuta tareas remotas.
+Ejemplo de configuración del emisor en Bash (sustituye la ruta y el identificador por los de tu nodo):
+
+```bash
+export AGENTMESH_DESTINO="https://direccion-del-nodo-receptor/mensajes"
+export AGENTMESH_NODO_ID="nodo-a"
+export AGENTMESH_CLAVE_PRIVADA_ARCHIVO="$HOME/.agentmesh/nodo-a-privada.pem"
+npm run send:example
+```
+
+En el receptor, define `AGENTMESH_NODOS_CONFIABLES` como JSON: cada clave es un identificador autorizado y cada valor es su clave pública PEM. Los saltos de línea pueden representarse como `\\n`. No incluyas la clave privada en esa lista ni en GitHub.
+
+La autenticación identifica al nodo, pero no autoriza por sí sola la ejecución de una tarea. El receptor todavía no ejecuta tareas remotas. El ejemplo requiere HTTPS para destinos remotos y solo permite HTTP para loopback local.
 
 ### Ejemplo de mensaje
 
