@@ -53,3 +53,61 @@ Las propuestas deben explicar el problema, la alternativa sugerida, sus implicac
 ## Licencia
 
 La licencia se decidirá antes de publicar una implementación reutilizable. Hasta entonces, consulta los avisos de derechos y permisos del repositorio antes de redistribuir el contenido.
+
+
+## Prototipo ejecutable inicial
+
+El repositorio incluye una primera base en TypeScript. En esta etapa ofrece un servidor local con un endpoint de salud y otro para validar la estructura de mensajes. **Todavía no implementa autenticación criptográfica entre nodos, ejecución de tareas ni memoria distribuida.**
+
+### Requisitos
+
+- Node.js 20 o posterior.
+- npm.
+
+### Preparar y ejecutar
+
+```bash
+npm install
+npm run dev
+```
+
+El servidor escucha por defecto en `http://127.0.0.1:8787`, accesible solo desde el propio equipo.
+
+- `GET /salud`: muestra el estado del prototipo.
+- `POST /mensajes`: recibe y valida un mensaje JSON de AgentMesh v1; no ejecuta la tarea solicitada.
+
+Para compilar y ejecutar la versión compilada:
+
+```bash
+npm run build
+npm start
+```
+
+Se puede cambiar el host y el puerto mediante las variables de entorno `AGENTMESH_HOST` y `AGENTMESH_PORT`. No expongas el servidor a una red pública: este prototipo todavía no autentica criptográficamente a los emisores.
+
+### Ejemplo de mensaje
+
+```json
+{
+  "version": 1,
+  "message_id": "mensaje-ejemplo-001",
+  "type": "hello",
+  "sender_id": "nodo-local",
+  "created_at": "2026-10-19T12:00:00Z",
+  "payload": {
+    "mensaje": "Hola desde AgentMesh"
+  }
+}
+```
+
+### Documentación del proyecto
+
+- [Visión y principios](docs/01-vision-y-principios.md)
+- [Arquitectura](docs/02-arquitectura.md)
+- [Nodos y agentes](docs/03-nodos-y-agentes.md)
+- [Memoria distribuida](docs/04-memoria-distribuida.md)
+- [Continuidad y recuperación](docs/05-continuidad-y-recuperacion.md)
+- [Seguridad y gobernanza](docs/06-seguridad-y-gobernanza.md)
+- [Hoja de ruta](docs/07-hoja-de-ruta.md)
+- [Formato de mensaje inicial](protocolo/mensaje-v1.md)
+- [Decisiones técnicas](DECISIONES.md)
