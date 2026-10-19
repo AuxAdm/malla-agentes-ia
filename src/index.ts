@@ -47,7 +47,7 @@ const servidor = createServer(async (solicitud, respuesta) => {
       servicio: "AgentMesh",
       estado: "disponible",
       version_protocolo: 1,
-      autenticacion_criptografica: "pendiente de implementación"
+      autenticacion_criptografica: "Ed25519 requerido en POST /mensajes"
     });
     return;
   }
@@ -140,6 +140,6 @@ const servidor = createServer(async (solicitud, respuesta) => {
 
 servidor.listen(PUERTO, HOST, () => {
   console.log(`AgentMesh escuchando en http://${HOST}:${PUERTO}`);
-  console.log("Este prototipo local no autentica criptográficamente a los nodos.");
+  console.log("POST /mensajes exige firma Ed25519 de un nodo configurado como confiable.");
   console.log(`Identificador de inicio: ${randomUUID()}`);
 });
