@@ -24,10 +24,13 @@ La hoja de ruta prioriza avances pequeños que puedan ejecutarse y entenderse. C
 
 ## Etapa 3 — Tareas recuperables
 
-- Añadir identificadores y estados de tarea.
-- Guardar el último estado confirmado.
-- Definir reintentos idempotentes.
-- Añadir cancelación y límites operativos.
+- [x] Añadir identificadores y estado inicial persistente (`accepted`).
+- [x] Guardar las tareas en un archivo local con reemplazo atómico.
+- [x] Hacer idempotente el alta por `task_id`, emisor y huella del contenido.
+- [x] Restringir la consulta de estado al nodo propietario.
+- [ ] Persistir transiciones adicionales de estado y resultado.
+- [ ] Añadir trabajador de ejecución con permisos explícitos, cancelación y límites operativos.
+- [ ] Probar recuperación tras reinicio y concurrencia real antes de declarar esta etapa cerrada.
 
 ## Etapa 4 — Interoperabilidad
 
