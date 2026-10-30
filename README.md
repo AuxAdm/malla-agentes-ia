@@ -78,7 +78,7 @@ El servidor escucha por defecto en `http://127.0.0.1:8787`, accesible solo desde
 - `task.submit`: registra una tarea persistente con `payload.task_id` y `payload.task`.
 - `task.status`: devuelve estado, resultado, error e historial; solo responde al nodo propietario.
 - `task.cancel`: solicita cancelar una tarea del nodo emisor.
-- El trabajador local procesa tareas `accepted` con un manejador registrado por el operador. El primer manejador incluido es `demo.echo`.
+- El trabajador local procesa tareas `accepted` con un manejador registrado por el operador. El primer manejador incluido es `demo.echo`. Cada ejecución tiene un tiempo máximo y cada resultado un tamaño máximo; ambos límites se pueden configurar localmente.
 
 Para compilar y ejecutar la versión compilada:
 
@@ -87,7 +87,7 @@ npm run build
 npm start
 ```
 
-Se puede cambiar el host y el puerto mediante `AGENTMESH_HOST` y `AGENTMESH_PORT`. Para aceptar mensajes, configura `AGENTMESH_NODOS_CONFIABLES` como un objeto JSON que asocie cada identificador de nodo con su clave pública Ed25519 en formato PEM. Si no hay una lista válida, `POST /mensajes` responde `503`. Para conexiones remotas, usa HTTPS (por ejemplo, mediante un proxy TLS); el cliente solo permite HTTP en loopback para pruebas locales. La ventana de firma es de cinco minutos y el registro anti-repetición está en memoria, por lo que aún no persiste entre reinicios.
+Se puede cambiar el host y el puerto mediante `AGENTMESH_HOST` y `AGENTMESH_PORT`. Los límites del trabajador se configuran con `AGENTMESH_TASK_TIMEOUT_MS` (por defecto 30000 ms, máximo 600000 ms) y `AGENTMESH_TASK_RESULT_MAX_BYTES` (por defecto 262144 bytes, máximo 4194304 bytes). Valores ausentes o inválidos usan el valor predeterminado; valores superiores se recortan al máximo permitido. `GET /salud` informa los límites efectivos. Para aceptar mensajes, configura `AGENTMESH_NODOS_CONFIABLES` como un objeto JSON que asocie cada identificador de nodo con su clave pública Ed25519 en formato PEM. Si no hay una lista válida, `POST /mensajes` responde `503`. Para conexiones remotas, usa HTTPS (por ejemplo, mediante un proxy TLS); el cliente solo permite HTTP en loopback para pruebas locales. La ventana de firma es de cinco minutos y el registro anti-repetición está en memoria, por lo que aún no persiste entre reinicios.
 
 ### Preparar claves para dos nodos
 
@@ -129,7 +129,7 @@ export AGENTMESH_PERMISOS_TAREAS='{"nodo-a":["demo.echo"]}'
 
 Cada identificador debe coincidir exactamente con el emisor autenticado. Si no existe una autorización explícita, la solicitud de tarea se rechaza con `403`. No basta con estar en la lista de nodos confiables: confianza criptográfica y permiso de ejecución son controles separados.
 
-La autenticación identifica al nodo, pero no concede permiso para ejecutar cualquier operación. El trabajador solo acepta tipos registrados localmente. `demo.echo` devuelve el campo `entrada` y sirve como demostración sin ejecutar comandos externos. Las tareas conservan transiciones e historial (`created`, `started`, `succeeded`, `failed`, `cancelled`, `recovered`). Si el nodo reinicia mientras una tarea estaba `running`, la vuelve a poner en cola; por ello, los manejadores futuros deberán diseñarse para tolerar reintentos y evitar efectos duplicados. Los datos se guardan por defecto en `./data/agentmesh-tasks.json`, configurable con `AGENTMESH_TASKS_FILE`. La escritura se serializa dentro del proceso y usa reemplazo atómico de archivo; no es un almacén multiinstancia y no debe compartirse entre varios procesos concurrentes. El ejemplo requiere HTTPS para destinos remotos y solo permite HTTP para loopback local.
+La autenticación identifica al nodo, pero no concede permiso para ejecutar cualquier operación. El trabajador solo acepta tipos registrados localmente. `demo.echo` devuelve el campo `entrada` y sirve como demostración sin ejecutar comandos externos. El trabajador aborta cooperativamente al alcanzar el tiempo máximo, y rechaza resultados no serializables como JSON o que superen el tamaño configurado. Un manejador debe respetar `contexto.signal`: JavaScript no puede detener a la fuerza una función que ignore la señal. El límite de tiempo libera al trabajador y marca la tarea como fallida, pero un manejador no cooperativo podría continuar realizando efectos externos; por ello, los manejadores deben ser cooperativos e idempotentes. Las tareas conservan transiciones e historial (`created`, `started`, `succeeded`, `failed`, `cancelled`, `recovered`). Si el nodo reinicia mientras una tarea estaba `running`, la vuelve a poner en cola; por ello, los manejadores futuros deberán diseñarse para tolerar reintentos y evitar efectos duplicados. Los datos se guardan por defecto en `./data/agentmesh-tasks.json`, configurable con `AGENTMESH_TASKS_FILE`. La escritura se serializa dentro del proceso y usa reemplazo atómico de archivo; no es un almacén multiinstancia y no debe compartirse entre varios procesos concurrentes. El ejemplo requiere HTTPS para destinos remotos y solo permite HTTP para loopback local.
 
 ### Ejemplo de envío de tarea
 
