@@ -129,7 +129,7 @@ const servidor = createServer(async (solicitud, respuesta) => {
           state: alta.tarea.state,
           repetida: alta.repetida,
           created_at: alta.tarea.created_at,
-          nota: "Tarea guardada de forma persistente; aún no se ejecuta automáticamente."
+          nota: "Tarea guardada; el trabajador local la procesará si existe una capacidad autorizada para su tipo."
         });
         return;
       }
@@ -166,7 +166,8 @@ const servidor = createServer(async (solicitud, respuesta) => {
           created_at: tarea.created_at,
           updated_at: tarea.updated_at,
           result: tarea.result,
-          error: tarea.error
+          error: tarea.error,
+          events: tarea.events
         });
         return;
       }
@@ -217,8 +218,31 @@ registroManejadoresTarea.registrar("demo.echo", async (entrada, contexto) => {
   };
 });
 
+registroManejadoresTarea.registrar("demo.echo", async (entrada, contexto) => {
+  if (contexto.signal.aborted) throw new Error("La tarea fue cancelada.");
+  return {
+    recibido: true,
+    salida: entrada.entrada ?? null,
+    task_id: contexto.taskId,
+    mensaje: "Resultado generado por la capacidad local demo.echo."
+  };
+});
+
 servidor.listen(PUERTO, HOST, () => {
   console.log(`AgentMesh escuchando en http://${HOST}:${PUERTO}`);
   console.log("POST /mensajes exige firma Ed25519 de un nodo configurado como confiable.");
   console.log(`Identificador de inicio: ${randomUUID()}`);
+  console.log(`Capacidades locales: ${registroManejadoresTarea.tipos().join(", ")}`);
+  void trabajadorTareas.iniciar().then((recuperadas) => {
+    if (recuperadas > 0) console.log(`AgentMesh recuperó ${recuperadas} tarea(s) interrumpida(s).`);
+  }).catch((error: unknown) => {
+    console.error("No fue posible iniciar el trabajador de tareas:", error);
+  });
 });
+
+function cerrarServidor(): void {
+  trabajadorTareas.detener();
+  servidor.close(() => process.exit(0));
+}
+process.once("SIGINT", cerrarServidor);
+process.once("SIGTERM", cerrarServidor);
