@@ -26,7 +26,7 @@ export interface EstadoTareaRemota {
 
 function crearMensaje(
   nodoId: string,
-  type: "task.submit" | "task.status",
+  type: "task.submit" | "task.status" | "task.cancel",
   payload: Record<string, unknown>
 ): MensajeAgentMesh {
   return {
@@ -111,7 +111,22 @@ export async function consultarEstadoTareaRemota(
       ...(typeof datos.created_at === "string" ? { created_at: datos.created_at } : {}),
       ...(typeof datos.updated_at === "string" ? { updated_at: datos.updated_at } : {}),
       ...(Object.hasOwn(datos, "result") ? { result: datos.result } : {}),
-      ...(typeof datos.error === "string" ? { error: datos.error } : {})
+      ...(typeof datos.error === "string" ? { error: datos.error } : {}),\n      ...(Array.isArray(datos.events) ? { events: datos.events as EstadoTareaRemota["events"] } : {})
     }
   };
+}
+
+
+/** Solicita cancelar una tarea propiedad del nodo emisor. */
+export async function cancelarTareaRemota(
+  configuracion: ConfiguracionClienteTareas,
+  taskId: string
+): Promise<ResultadoEnvioNodo> {
+  if (!taskId.trim() || taskId.length > 128) {
+    throw new Error("taskId debe contener entre 1 y 128 caracteres.");
+  }
+  return enviarMensajeAutenticado({
+    ...configuracion,
+    mensaje: crearMensaje(configuracion.nodoId, "task.cancel", { task_id: taskId })
+  });
 }
