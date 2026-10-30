@@ -9,6 +9,24 @@ const HOST = process.env.AGENTMESH_HOST ?? "127.0.0.1";
 const PUERTO = Number.parseInt(process.env.AGENTMESH_PORT ?? "8787", 10);
 const TAMANO_MAXIMO = 64 * 1024;
 
+function permisosTareasPorNodo(): Record<string, string[]> {
+  const configuracion = process.env.AGENTMESH_PERMISOS_TAREAS;
+  if (!configuracion) return {};
+  try {
+    const valor: unknown = JSON.parse(configuracion);
+    if (typeof valor !== "object" || valor === null || Array.isArray(valor)) return {};
+    const permisos: Record<string, string[]> = {};
+    for (const [nodo, capacidades] of Object.entries(valor)) {
+      if (Array.isArray(capacidades) && capacidades.every((tipo) => typeof tipo === "string")) {
+        permisos[nodo] = capacidades;
+      }
+    }
+    return permisos;
+  } catch {
+    return {};
+  }
+}
+
 function responder(respuesta: ServerResponse, estado: number, cuerpo: unknown): void {
   respuesta.writeHead(estado, {
     "content-type": "application/json; charset=utf-8",
@@ -113,6 +131,16 @@ const servidor = createServer(async (solicitud, respuesta) => {
             typeof contenidoTarea !== "object" || contenidoTarea === null || Array.isArray(contenidoTarea)) {
           responder(respuesta, 400, {
             error: "task.submit requiere payload.task_id (texto de 1 a 128 caracteres) y payload.task (objeto JSON)."
+          });
+          return;
+        }
+
+        const tipoTarea = (contenidoTarea as Record<string, unknown>).tipo;
+        const capacidadesPermitidas = permisosTareasPorNodo()[emisor] ?? [];
+        if (typeof tipoTarea !== "string" || !capacidadesPermitidas.includes(tipoTarea)) {
+          responder(respuesta, 403, {
+            error: "El nodo emisor no tiene permiso para solicitar esta capacidad.",
+            capacidad: typeof tipoTarea === "string" ? tipoTarea : null
           });
           return;
         }
