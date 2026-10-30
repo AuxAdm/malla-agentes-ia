@@ -3,6 +3,7 @@ export type TipoMensaje =
   | "capabilities"
   | "task.submit"
   | "task.status"
+  | "task.cancel"
   | "task.result"
   | "error";
 
@@ -21,6 +22,7 @@ const TIPOS_VALIDOS = new Set<TipoMensaje>([
   "capabilities",
   "task.submit",
   "task.status",
+  "task.cancel",
   "task.result",
   "error"
 ]);
