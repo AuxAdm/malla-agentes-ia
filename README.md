@@ -121,6 +121,14 @@ El identificador es opcional; si se omite, el cliente genera uno nuevo. Conserva
 
 En el receptor, define `AGENTMESH_NODOS_CONFIABLES` como JSON: cada clave es un identificador autorizado y cada valor es su clave pública PEM. Los saltos de línea pueden representarse como `\\n`. No incluyas la clave privada en esa lista ni en GitHub.
 
+Además, el operador del receptor debe autorizar las capacidades por nodo mediante `AGENTMESH_PERMISOS_TAREAS`. Para permitir que `nodo-a` use únicamente la capacidad de demostración:
+
+```bash
+export AGENTMESH_PERMISOS_TAREAS='{"nodo-a":["demo.echo"]}'
+```
+
+Cada identificador debe coincidir exactamente con el emisor autenticado. Si no existe una autorización explícita, la solicitud de tarea se rechaza con `403`. No basta con estar en la lista de nodos confiables: confianza criptográfica y permiso de ejecución son controles separados.
+
 La autenticación identifica al nodo, pero no concede permiso para ejecutar cualquier operación. El trabajador solo acepta tipos registrados localmente. `demo.echo` devuelve el campo `entrada` y sirve como demostración sin ejecutar comandos externos. Las tareas conservan transiciones e historial (`created`, `started`, `succeeded`, `failed`, `cancelled`, `recovered`). Si el nodo reinicia mientras una tarea estaba `running`, la vuelve a poner en cola; por ello, los manejadores futuros deberán diseñarse para tolerar reintentos y evitar efectos duplicados. Los datos se guardan por defecto en `./data/agentmesh-tasks.json`, configurable con `AGENTMESH_TASKS_FILE`. La escritura se serializa dentro del proceso y usa reemplazo atómico de archivo; no es un almacén multiinstancia y no debe compartirse entre varios procesos concurrentes. El ejemplo requiere HTTPS para destinos remotos y solo permite HTTP para loopback local.
 
 ### Ejemplo de envío de tarea
