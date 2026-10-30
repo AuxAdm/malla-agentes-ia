@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { validarMensaje } from "./protocolo/mensaje.js";
 import { verificarAutenticacionNodo } from "./seguridad/autenticacion-nodo.js";
 import { almacenTareas } from "./tareas/almacen-tareas.js";
+import { registroManejadoresTarea, trabajadorTareas } from "./tareas/trabajador-tareas.js";
 
 const HOST = process.env.AGENTMESH_HOST ?? "127.0.0.1";
 const PUERTO = Number.parseInt(process.env.AGENTMESH_PORT ?? "8787", 10);
@@ -133,6 +134,21 @@ const servidor = createServer(async (solicitud, respuesta) => {
         return;
       }
 
+      if (mensaje.type === "task.cancel") {
+        const taskId = mensaje.payload.task_id;
+        if (typeof taskId !== "string" || taskId.length < 1 || taskId.length > 128) {
+          responder(respuesta, 400, { error: "task.cancel requiere payload.task_id válido." });
+          return;
+        }
+        const cancelada = await trabajadorTareas.cancelar(taskId, emisor);
+        if (!cancelada) {
+          responder(respuesta, 409, { error: "La tarea no existe o ya alcanzó un estado terminal.", task_id: taskId });
+          return;
+        }
+        responder(respuesta, 200, { task_id: taskId, state: "cancelled" });
+        return;
+      }
+
       if (mensaje.type === "task.status") {
         const taskId = mensaje.payload.task_id;
         if (typeof taskId !== "string" || taskId.length < 1 || taskId.length > 128) {
@@ -189,6 +205,16 @@ const servidor = createServer(async (solicitud, respuesta) => {
   }
 
   responder(respuesta, 404, { error: "Ruta no encontrada." });
+});
+
+registroManejadoresTarea.registrar("demo.echo", async (entrada, contexto) => {
+  if (contexto.signal.aborted) throw new Error("La tarea fue cancelada.");
+  return {
+    recibido: true,
+    salida: entrada.entrada ?? null,
+    task_id: contexto.taskId,
+    mensaje: "Resultado generado por una capacidad local demo.echo."
+  };
 });
 
 servidor.listen(PUERTO, HOST, () => {
