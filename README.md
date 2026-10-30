@@ -25,7 +25,7 @@ AgentMesh busca reducir la dependencia de un único proveedor, servidor, modelo 
 
 ## Estado del proyecto
 
-**Prototipo en evolución:** `POST /mensajes` valida firmas Ed25519 y ahora puede registrar tareas `task.submit` y consultar `task.status`. Las tareas se guardan en disco y no se ejecutan automáticamente.
+**Prototipo en evolución:** dos nodos pueden intercambiar mensajes autenticados con Ed25519. El cliente también permite registrar tareas remotas (`task.submit`) y consultar su estado (`task.status`). Las tareas se guardan en disco, pero todavía no se ejecutan automáticamente.
 
 ## Primeros objetivos
 
@@ -96,7 +96,7 @@ openssl genpkey -algorithm ED25519 -out nodo-a-privada.pem
 openssl pkey -in nodo-a-privada.pem -pubout -out nodo-a-publica.pem
 ```
 
-En el nodo receptor, configura `AGENTMESH_NODOS_CONFIABLES` con los identificadores y las claves públicas autorizadas. En el emisor, carga la clave privada desde un gestor de secretos o una variable local y usa `enviarMensajeAutenticado` de `src/protocolo/cliente-nodo.ts`. La firma cubre método, ruta, identificador del emisor, marca de tiempo, nonce y huella SHA-256 del cuerpo.
+En el nodo receptor, configura `AGENTMESH_NODOS_CONFIABLES` con los identificadores y las claves públicas autorizadas. En el emisor, carga la clave privada desde un gestor de secretos o una variable local. Para mensajes generales usa `enviarMensajeAutenticado` de `src/protocolo/cliente-nodo.ts`; para tareas usa `enviarTareaRemota` y `consultarEstadoTareaRemota` de `src/protocolo/cliente-tareas.ts`. La firma cubre método, ruta, identificador del emisor, marca de tiempo, nonce y huella SHA-256 del cuerpo.
 
 Ejemplo de configuración del emisor en Bash (sustituye la ruta y el identificador por los de tu nodo):
 
@@ -106,6 +106,16 @@ export AGENTMESH_NODO_ID="nodo-a"
 export AGENTMESH_CLAVE_PRIVADA_ARCHIVO="$HOME/.agentmesh/nodo-a-privada.pem"
 npm run send:example
 ```
+
+Para registrar una tarea y consultar inmediatamente su estado desde el nodo emisor:
+
+```bash
+export AGENTMESH_TASK_ID="tarea-demo-001"
+export AGENTMESH_TASK_JSON='{"tipo":"resumen","entrada":"texto de ejemplo"}'
+npm run task:example
+```
+
+El identificador es opcional; si se omite, el cliente genera uno nuevo. Conserva el mismo identificador para reintentar un registro de forma idempotente. El ejemplo solo registra y consulta: el estado permanecerá en `accepted` hasta que se incorpore el ejecutor de tareas.
 
 En el receptor, define `AGENTMESH_NODOS_CONFIABLES` como JSON: cada clave es un identificador autorizado y cada valor es su clave pública PEM. Los saltos de línea pueden representarse como `\\n`. No incluyas la clave privada en esa lista ni en GitHub.
 
