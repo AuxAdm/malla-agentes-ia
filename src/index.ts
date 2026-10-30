@@ -214,16 +214,6 @@ registroManejadoresTarea.registrar("demo.echo", async (entrada, contexto) => {
     recibido: true,
     salida: entrada.entrada ?? null,
     task_id: contexto.taskId,
-    mensaje: "Resultado generado por una capacidad local demo.echo."
-  };
-});
-
-registroManejadoresTarea.registrar("demo.echo", async (entrada, contexto) => {
-  if (contexto.signal.aborted) throw new Error("La tarea fue cancelada.");
-  return {
-    recibido: true,
-    salida: entrada.entrada ?? null,
-    task_id: contexto.taskId,
     mensaje: "Resultado generado por la capacidad local demo.echo."
   };
 });
