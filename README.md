@@ -25,7 +25,7 @@ AgentMesh busca reducir la dependencia de un único proveedor, servidor, modelo 
 
 ## Estado del proyecto
 
-**Prototipo en evolución:** dos nodos pueden intercambiar mensajes autenticados con Ed25519. El cliente también permite registrar tareas remotas (`task.submit`) y consultar su estado (`task.status`). Las tareas se guardan en disco, pero todavía no se ejecutan automáticamente.
+**Prototipo en evolución:** dos nodos pueden intercambiar mensajes autenticados con Ed25519. El receptor registra tareas, ejecuta capacidades locales expresamente registradas, conserva estados e historial y permite consultar o cancelar tareas. La ejecución está limitada a los manejadores que el operador instala y habilita.
 
 ## Primeros objetivos
 
@@ -57,7 +57,7 @@ La licencia se decidirá antes de publicar una implementación reutilizable. Has
 
 ## Prototipo ejecutable inicial
 
-El repositorio incluye un servidor TypeScript, validación de mensajes AgentMesh v1 y autenticación Ed25519 para solicitudes entre nodos de confianza. **Todavía no ejecuta tareas remotas ni implementa memoria distribuida.**
+El repositorio incluye un servidor TypeScript, validación de mensajes AgentMesh v1, autenticación Ed25519 y un trabajador local de tareas. **No implementa todavía memoria distribuida, ejecución multi-proceso ni selección automática de nodos alternativos.**
 
 ### Requisitos
 
@@ -75,8 +75,10 @@ El servidor escucha por defecto en `http://127.0.0.1:8787`, accesible solo desde
 
 - `GET /salud`: muestra el estado del prototipo.
 - `POST /mensajes`: exige cabeceras firmadas Ed25519, verifica identidad, vigencia y repetición, y valida el mensaje.
-- `task.submit`: dentro de `POST /mensajes`, guarda una tarea persistente con `payload.task_id` y `payload.task`.
-- `task.status`: dentro de `POST /mensajes`, consulta el estado usando `payload.task_id`; solo responde al nodo propietario.
+- `task.submit`: registra una tarea persistente con `payload.task_id` y `payload.task`.
+- `task.status`: devuelve estado, resultado, error e historial; solo responde al nodo propietario.
+- `task.cancel`: solicita cancelar una tarea del nodo emisor.
+- El trabajador local procesa tareas `accepted` con un manejador registrado por el operador. El primer manejador incluido es `demo.echo`.
 
 Para compilar y ejecutar la versión compilada:
 
@@ -111,15 +113,15 @@ Para registrar una tarea y consultar inmediatamente su estado desde el nodo emis
 
 ```bash
 export AGENTMESH_TASK_ID="tarea-demo-001"
-export AGENTMESH_TASK_JSON='{"tipo":"resumen","entrada":"texto de ejemplo"}'
+export AGENTMESH_TASK_JSON='{"tipo":"demo.echo","entrada":"Hola desde AgentMesh"}'
 npm run task:example
 ```
 
-El identificador es opcional; si se omite, el cliente genera uno nuevo. Conserva el mismo identificador para reintentar un registro de forma idempotente. El ejemplo solo registra y consulta: el estado permanecerá en `accepted` hasta que se incorpore el ejecutor de tareas.
+El identificador es opcional; si se omite, el cliente genera uno nuevo. Conserva el mismo identificador para reintentar un registro de forma idempotente. El ejemplo utiliza `demo.echo`, espera la finalización y muestra el resultado e historial.
 
 En el receptor, define `AGENTMESH_NODOS_CONFIABLES` como JSON: cada clave es un identificador autorizado y cada valor es su clave pública PEM. Los saltos de línea pueden representarse como `\\n`. No incluyas la clave privada en esa lista ni en GitHub.
 
-La autenticación identifica al nodo, pero no autoriza por sí sola la ejecución de una tarea. `task.submit` guarda una tarea con estado inicial `accepted`; `task.status` permite consultar su estado únicamente al nodo propietario. Los datos se guardan por defecto en `./data/agentmesh-tasks.json`, configurable con `AGENTMESH_TASKS_FILE`. La escritura se serializa dentro del proceso y usa reemplazo atómico de archivo; todavía no es un almacén multiinstancia y no debe compartirse entre varios procesos concurrentes. Las tareas siguen sin ejecutarse automáticamente. El ejemplo requiere HTTPS para destinos remotos y solo permite HTTP para loopback local.
+La autenticación identifica al nodo, pero no concede permiso para ejecutar cualquier operación. El trabajador solo acepta tipos registrados localmente. `demo.echo` devuelve el campo `entrada` y sirve como demostración sin ejecutar comandos externos. Las tareas conservan transiciones e historial (`created`, `started`, `succeeded`, `failed`, `cancelled`, `recovered`). Si el nodo reinicia mientras una tarea estaba `running`, la vuelve a poner en cola; por ello, los manejadores futuros deberán diseñarse para tolerar reintentos y evitar efectos duplicados. Los datos se guardan por defecto en `./data/agentmesh-tasks.json`, configurable con `AGENTMESH_TASKS_FILE`. La escritura se serializa dentro del proceso y usa reemplazo atómico de archivo; no es un almacén multiinstancia y no debe compartirse entre varios procesos concurrentes. El ejemplo requiere HTTPS para destinos remotos y solo permite HTTP para loopback local.
 
 ### Ejemplo de envío de tarea
 
@@ -134,12 +136,12 @@ Usa un mensaje firmado cuyo tipo sea `task.submit` y cuyo `payload` contenga un 
   "created_at": "2026-10-19T12:00:00Z",
   "payload": {
     "task_id": "tarea-001",
-    "task": { "tipo": "ejemplo", "entrada": "datos" }
+    "task": { "tipo": "demo.echo", "entrada": "datos" }
   }
 }
 ```
 
-La respuesta indica `state: accepted`. Reenviar el mismo `task_id` desde el mismo nodo con el mismo contenido devuelve la tarea existente; reutilizarlo con otro contenido produce `409 Conflict`. El estado se conserva en el archivo configurado, pero no hay trabajador ejecutor todavía.
+La respuesta indica `state: accepted`. Reenviar el mismo `task_id` desde el mismo nodo con el mismo contenido devuelve la tarea existente; reutilizarlo con otro contenido produce `409 Conflict`. El estado y el historial se conservan en el archivo configurado. Para ejecutar el ejemplo, la tarea debe declarar `"tipo": "demo.echo"`; cualquier tipo no registrado localmente termina en `failed` sin ejecutar código recibido.
 
 ### Ejemplo de mensaje
 
