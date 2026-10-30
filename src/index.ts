@@ -67,6 +67,7 @@ const servidor = createServer(async (solicitud, respuesta) => {
       servicio: "AgentMesh",
       estado: "disponible",
       version_protocolo: 1,
+      capacidades_locales: registroManejadoresTarea.tipos(),
       autenticacion_criptografica: "Ed25519 requerido en POST /mensajes"
     });
     return;
