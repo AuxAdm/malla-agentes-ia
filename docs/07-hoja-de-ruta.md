@@ -32,7 +32,8 @@ La hoja de ruta prioriza avances pequeños que puedan ejecutarse y entenderse. C
 - [x] Persistir transiciones de estado, resultados e historial de eventos.
 - [x] Añadir trabajador secuencial con registro de capacidades locales explícitas.
 - [x] Añadir cancelación autenticada y recuperación de tareas que estaban en ejecución al reiniciar.
-- [ ] Añadir límites configurables de tiempo, tamaño de resultado y concurrencia.
+- [x] Añadir límites configurables de tiempo de ejecución y tamaño de resultado, con valores efectivos visibles en `/salud`.
+- [ ] Añadir concurrencia configurable y almacenamiento transaccional multiinstancia.
 - [ ] Ejecutar compilación y flujo real entre dos nodos; probar recuperación tras reinicio y concurrencia antes de declarar esta etapa cerrada.
 
 ## Etapa 4 — Interoperabilidad
