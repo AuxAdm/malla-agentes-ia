@@ -90,7 +90,7 @@ async function guardarArchivo(archivo: ArchivoTareas): Promise<void> {
 
 export class AlmacenTareas {
   async registrar(taskId: string, ownerNode: string, payload: Record<string, unknown>, ahora = new Date().toISOString()): Promise<ResultadoAltaTarea> {
-    return serializar(async () => {
+    return serializar<ResultadoAltaTarea>(async () => {
       const archivo = await leerArchivo();
       const hash = huella(payload);
       const existente = archivo.tareas.find((tarea) => tarea.task_id === taskId);
@@ -112,14 +112,14 @@ export class AlmacenTareas {
   }
 
   async consultar(taskId: string, ownerNode: string): Promise<TareaPersistida | null> {
-    return serializar(async () => {
+    return serializar<TareaPersistida | null>(async () => {
       const archivo = await leerArchivo();
       return archivo.tareas.find((item) => item.task_id === taskId && item.owner_node === ownerNode) ?? null;
     });
   }
 
   async siguientePendiente(): Promise<TareaPersistida | null> {
-    return serializar(async () => {
+    return serializar<TareaPersistida | null>(async () => {
       const archivo = await leerArchivo();
       const tarea = archivo.tareas.find((item) => item.state === "accepted");
       if (!tarea) return null;
@@ -138,7 +138,7 @@ export class AlmacenTareas {
     nuevoEstado: EstadoTarea,
     opciones: { result?: unknown; error?: string; detail?: string } = {}
   ): Promise<ResultadoTransicion> {
-    return serializar(async () => {
+    return serializar<ResultadoTransicion>(async () => {
       const archivo = await leerArchivo();
       const tarea = archivo.tareas.find((item) => item.task_id === taskId && item.owner_node === ownerNode);
       if (!tarea) return { actualizada: false, motivo: "not_found" };
@@ -170,7 +170,7 @@ export class AlmacenTareas {
   }
 
   async recuperarEnCurso(): Promise<number> {
-    return serializar(async () => {
+    return serializar<number>(async () => {
       const archivo = await leerArchivo();
       const ahora = new Date().toISOString();
       let recuperadas = 0;
