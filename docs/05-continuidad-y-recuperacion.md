@@ -17,7 +17,7 @@ Mantener servicios y tareas recuperables cuando fallan nodos, conexiones, provee
 
 ## 3. Registro recuperable de tareas
 
-Para reanudar trabajo, una tarea debe conservar identificador, estado, versión del esquema, pasos completados, último resultado confirmado y política de reintentos. No se guardarán secretos ni contexto privado innecesario.
+El prototipo conserva identificador, estado, contenido, huella, fechas, resultado, error e historial de eventos. El trabajador reencola al iniciar el nodo las tareas que quedaron en `running`, registrando el evento `recovered`. Esta estrategia permite recuperar trabajo interrumpido, pero puede repetir un efecto externo si el proceso cayó después de producirlo y antes de guardar `succeeded`; por eso los futuros manejadores deben usar claves de idempotencia o confirmar sus efectos de forma transaccional. No se guardarán secretos ni contexto privado innecesario.
 
 ## 4. Estrategia de recuperación
 
@@ -50,4 +50,4 @@ El operador puede apagar, desconectar o retirar su nodo. Otros nodos pueden cont
 - cantidad de dependencias centralizadas;
 - antigüedad de la última copia verificada.
 
-Los indicadores se medirán cuando exista una implementación; por ahora son objetivos de diseño.
+Los indicadores se medirán cuando exista instrumentación suficiente. El almacén actual es local a un proceso; la coordinación multiinstancia y los límites de ejecución siguen pendientes.
