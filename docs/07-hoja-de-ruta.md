@@ -28,6 +28,7 @@ La hoja de ruta prioriza avances pequeños que puedan ejecutarse y entenderse. C
 - [x] Guardar las tareas en un archivo local con reemplazo atómico.
 - [x] Hacer idempotente el alta por `task_id`, emisor y huella del contenido.
 - [x] Restringir la consulta de estado al nodo propietario.
+- [x] Incorporar cliente TypeScript para registrar tareas y consultar su estado en nodos remotos.
 - [ ] Persistir transiciones adicionales de estado y resultado.
 - [ ] Añadir trabajador de ejecución con permisos explícitos, cancelación y límites operativos.
 - [ ] Probar recuperación tras reinicio y concurrencia real antes de declarar esta etapa cerrada.
