@@ -16,7 +16,7 @@ if (!destino || !nodoId || !archivoClave) {
     const tarea: Record<string, unknown> = tareaJson
       ? JSON.parse(tareaJson) as Record<string, unknown>
       : {
-          tipo: "ejemplo",
+          tipo: "demo.echo",
           descripcion: "Tarea de demostración registrada por un nodo remoto",
           datos: { saludo: "Hola desde AgentMesh" }
         };
