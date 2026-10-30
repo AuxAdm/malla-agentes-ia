@@ -54,6 +54,7 @@ Antes de continuar, leer este archivo y el estado de la rama `main`. Consultar e
 - Registro persistente local de tareas con estados, resultados e historial de eventos.
 - Trabajador secuencial con manejadores locales registrados explícitamente; incluye `demo.echo`.
 - Mensajes autenticados `task.submit`, `task.status` y `task.cancel`; el estado se consulta solo por el nodo propietario.
+- La ejecución remota exige autorización explícita por nodo y tipo mediante `AGENTMESH_PERMISOS_TAREAS`; la lista de confianza Ed25519 no concede permisos de capacidad por sí sola.
 - Cliente de alto nivel y ejemplos de envío y gestión de tareas.
 - Recuperación al reiniciar: las tareas que estaban `running` vuelven a `accepted`; los manejadores deben tolerar reintentos.
 - La protección anti-repetición no sobrevive reinicios y el almacén JSON no coordina varios procesos; no usar varias instancias contra el mismo archivo.
