@@ -48,9 +48,10 @@ function crearMensaje(
 export async function enviarTareaRemota(
   configuracion: ConfiguracionClienteTareas,
   tarea: Record<string, unknown>,
-  taskId = randomUUID()
+  taskId?: string
 ): Promise<ResultadoEnvioTarea> {
-  if (!taskId.trim() || taskId.length > 128) {
+  const identificador = taskId ?? randomUUID();
+  if (!identificador.trim() || identificador.length > 128) {
     throw new Error("taskId debe contener entre 1 y 128 caracteres.");
   }
   if (typeof tarea !== "object" || tarea === null || Array.isArray(tarea)) {
