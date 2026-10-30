@@ -51,12 +51,13 @@ Antes de continuar, leer este archivo y el estado de la rama `main`. Consultar e
 - Servidor HTTP básico y protocolo de mensajes v1.
 - Autenticación de nodos con Ed25519 y protección anti-repetición en memoria.
 - Cliente para envío autenticado de mensajes.
-- Registro persistente local de tareas `task.submit` y consulta `task.status`.
-- Cliente de alto nivel para registrar y consultar tareas remotas.
-- Ejemplos `send:example` y `task:example`.
-- Las tareas todavía no se ejecutan automáticamente.
-- La protección anti-repetición no sobrevive reinicios y el almacén JSON no coordina varios procesos.
+- Registro persistente local de tareas con estados, resultados e historial de eventos.
+- Trabajador secuencial con manejadores locales registrados explícitamente; incluye `demo.echo`.
+- Mensajes autenticados `task.submit`, `task.status` y `task.cancel`; el estado se consulta solo por el nodo propietario.
+- Cliente de alto nivel y ejemplos de envío y gestión de tareas.
+- Recuperación al reiniciar: las tareas que estaban `running` vuelven a `accepted`; los manejadores deben tolerar reintentos.
+- La protección anti-repetición no sobrevive reinicios y el almacén JSON no coordina varios procesos; no usar varias instancias contra el mismo archivo.
 
 ## Siguiente construcción prioritaria
 
-Completar el ciclo de vida recuperable de tareas: transiciones persistentes de estado, eventos e historial, trabajador con manejadores locales explícitamente registrados, cancelación y recuperación segura después de reiniciar. No permitir ejecución arbitraria de contenido remoto.
+Ampliar el motor de tareas con límites configurables de tiempo y tamaño de resultado, cancelación cooperativa fiable, y almacenamiento transaccional apto para más de un proceso. Después construir negociación de capacidades entre nodos. No permitir ejecución arbitraria de contenido remoto.
