@@ -22,6 +22,7 @@ export interface EstadoTareaRemota {
   updated_at?: string;
   result?: unknown;
   error?: string;
+  events?: Array<{ event_id: string; type: string; at: string; detail?: string }>;
 }
 
 function crearMensaje(
@@ -111,7 +112,8 @@ export async function consultarEstadoTareaRemota(
       ...(typeof datos.created_at === "string" ? { created_at: datos.created_at } : {}),
       ...(typeof datos.updated_at === "string" ? { updated_at: datos.updated_at } : {}),
       ...(Object.hasOwn(datos, "result") ? { result: datos.result } : {}),
-      ...(typeof datos.error === "string" ? { error: datos.error } : {}),\n      ...(Array.isArray(datos.events) ? { events: datos.events as EstadoTareaRemota["events"] } : {})
+      ...(typeof datos.error === "string" ? { error: datos.error } : {}),
+      ...(Array.isArray(datos.events) ? { events: datos.events as EstadoTareaRemota["events"] } : {})
     }
   };
 }
