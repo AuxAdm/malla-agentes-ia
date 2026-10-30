@@ -61,7 +61,7 @@ export async function enviarTareaRemota(
   const resultado = await enviarMensajeAutenticado({
     ...configuracion,
     mensaje: crearMensaje(configuracion.nodoId, "task.submit", {
-      task_id: taskId,
+      task_id: identificador,
       task: tarea
     })
   });
@@ -73,7 +73,7 @@ export async function enviarTareaRemota(
 
   return {
     ...resultado,
-    taskId,
+    taskId: identificador,
     ...(typeof datos.repetida === "boolean" ? { repetida: datos.repetida } : {}),
     ...(typeof datos.state === "string" ? { state: datos.state } : {})
   };
