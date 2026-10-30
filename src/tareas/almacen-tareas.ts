@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 
@@ -53,7 +53,7 @@ function huella(valor: unknown): string {
 
 function evento(type: TipoEventoTarea, at: string, detail?: string): EventoTarea {
   return {
-    event_id: createHash("sha256").update(`${type}:${at}:${Math.random()}`).digest("hex"),
+    event_id: randomUUID(),
     type,
     at,
     ...(detail ? { detail } : {})
