@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { validarMensaje } from "./protocolo/mensaje.js";
 import { verificarAutenticacionNodo } from "./seguridad/autenticacion-nodo.js";
 import { almacenTareas } from "./tareas/almacen-tareas.js";
-import { registroManejadoresTarea, trabajadorTareas } from "./tareas/trabajador-tareas.js";
+import { obtenerLimitesTrabajador, registroManejadoresTarea, trabajadorTareas } from "./tareas/trabajador-tareas.js";
 
 const HOST = process.env.AGENTMESH_HOST ?? "127.0.0.1";
 const PUERTO = Number.parseInt(process.env.AGENTMESH_PORT ?? "8787", 10);
@@ -68,6 +68,7 @@ const servidor = createServer(async (solicitud, respuesta) => {
       estado: "disponible",
       version_protocolo: 1,
       capacidades_locales: registroManejadoresTarea.tipos(),
+      limites_tareas: obtenerLimitesTrabajador(),
       autenticacion_criptografica: "Ed25519 requerido en POST /mensajes"
     });
     return;
