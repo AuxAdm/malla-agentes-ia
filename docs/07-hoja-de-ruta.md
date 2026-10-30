@@ -29,9 +29,11 @@ La hoja de ruta prioriza avances pequeños que puedan ejecutarse y entenderse. C
 - [x] Hacer idempotente el alta por `task_id`, emisor y huella del contenido.
 - [x] Restringir la consulta de estado al nodo propietario.
 - [x] Incorporar cliente TypeScript para registrar tareas y consultar su estado en nodos remotos.
-- [ ] Persistir transiciones adicionales de estado y resultado.
-- [ ] Añadir trabajador de ejecución con permisos explícitos, cancelación y límites operativos.
-- [ ] Probar recuperación tras reinicio y concurrencia real antes de declarar esta etapa cerrada.
+- [x] Persistir transiciones de estado, resultados e historial de eventos.
+- [x] Añadir trabajador secuencial con registro de capacidades locales explícitas.
+- [x] Añadir cancelación autenticada y recuperación de tareas que estaban en ejecución al reiniciar.
+- [ ] Añadir límites configurables de tiempo, tamaño de resultado y concurrencia.
+- [ ] Ejecutar compilación y flujo real entre dos nodos; probar recuperación tras reinicio y concurrencia antes de declarar esta etapa cerrada.
 
 ## Etapa 4 — Interoperabilidad
 
